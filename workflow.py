@@ -116,7 +116,50 @@ def MrBayes(path_in, genes):
 
 
 
+# ########################################################################################################################
+# #####################################---- Astral Tree Search ----#####################################################
+# ########################################################################################################################
 
+#Here you should stop and go to folder /home/kris/dypsidinae/MrBayes  and do cat *treefile???hedder noget andet > gene_trees.nex
+
+#Showing Posterior Probabilities
+def astral_2(path_in, gene_tree_file, output, genes):
+    """Using Astral to construct a species tree from the genetrees"""
+    inputs = [path_in]
+    outputs = [path_in + output]
+    options = {'cores': 10, 'memory': "100g", 'walltime': "12:00:00", 'account':"dypsidinae"}
+
+    spec = """
+    source /home/kris/miniconda3/etc/profile.d/conda.sh
+    cd /home/kris/Astral/
+  
+    java -D"java.library.path=lib/" -jar astral.5.15.5.jar -i /home/kris/dypsidinae/A/3.Astral/gene_trees.nex -o astral_tree_probabilities.tre 2> log_posterior_probability.out
+    
+    mv astral_tree_probabilities.tre /home/kris/dypsidinae/3.Astral/
+    mv log_posterior_probability.out /home/kris/dypsidinae/3.Astral/
+    """.format(path_in = path_in, gene_tree_file = gene_tree_file, output=output, genes = genes)
+    
+    return (inputs, outputs, options, spec)
+        
+#Showing number of genes supporting clades   
+def astral_gene_supporting(path_in, gene_tree_file, output, genes):
+    """Using Astral to construct a species tree based on the genetrees"""
+    inputs = [path_in+"gene_trees.nex"]
+    outputs = [path_in + output]
+    options = {'cores': 10, 'memory': "40g", 'walltime': "24:00:00", 'account':"dypsidinae"}
+
+    spec = """
+    source /home/kris/miniconda3/etc/profile.d/conda.sh
+    cd /home/kris/Astral/
+  
+    java -D"java.library.path=lib/" -jar astral.5.15.5.jar -i /home/kris/dypsidinae/A/3.Astral/gene_trees.nex -o astral_gene_probability.tre -t 2 2> log_gene_effective.out
+      
+    mv astral_gene_probability.tre /home/kris/Dypsidinae/A/3.Astral/
+    mv log_gene_effective.out /home/kris/dypsidinae/A/3.Astral/
+    
+    """.format(path_in = path_in, gene_tree_file = gene_tree_file, output=output, genes = genes)
+
+    return (inputs, outputs, options, spec)
 
 
 ########################################################################################################################
