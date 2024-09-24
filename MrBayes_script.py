@@ -88,7 +88,7 @@ for nr,name in enumerate(list_for_iteration, start=1):
         ngammacat=str(index_s[2]).partition(end)
         rate_variation= " rates=invgamma ngammacat="+ngammacat[0]+"; \n"
     else:
-        rate_variation= "error"
+        rate_variation= "; \n" 
 
     block.append(str(nucleotide_model)+str(rate_variation))
     block.append(str(base_freq))
