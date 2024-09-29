@@ -86,7 +86,7 @@ def MrBayes(path_in, genes):
     """Using MrBayes to find the best model"""
     inputs = [path_in+genes+".fasta-out.nex"]
     outputs = ["/home/kris/dypsidinae/2.MrBayes/"+genes+".log"]
-    options = {'cores': 8, 'memory': "100g", 'walltime': "12:00:00", 'account':"dypsidinae"}
+    options = {'cores': 16, 'memory': "100g", 'walltime': "100:00:00", 'account':"dypsidinae"}
 
     spec = """
 
@@ -109,7 +109,57 @@ def MrBayes(path_in, genes):
     return (inputs, outputs, options, spec)
 
 
+# ########################################################################################################################
+# ##############################################---- MrBayes_2 ----#########################################################
+# ########################################################################################################################
 
+
+def MrBayes_2(path_in, genes):
+    """Using MrBayes to find the best model for genes that did not converge the first time"""
+    inputs = [path_in+genes+".fasta-out.nex"]
+    outputs = ["/home/kris/dypsidinae/2.MrBayes/"+genes+".log"]
+    options = {'cores': 16, 'memory': "100g", 'walltime': "36:00:00", 'account':"dypsidinae"}
+
+    spec = """
+
+    cd /home/kris/dypsidinae/scripts/
+    source /home/kris/miniconda3/etc/profile.d/conda.sh
+    conda activate python3_env
+    python3 MrBayes_2.py {genes}
+
+    cd /home/kris/dypsidinae/programs/MrBayes-3.2.7a/bin/
+
+    #Activate MrBayes
+    ./mb  /home/kris/dypsidinae/2.MrBayes/{genes}_MrBayes_block_2.nex
+   
+
+
+    """.format(path_in = path_in, genes=genes)
+
+    return (inputs, outputs, options, spec)
+
+# ########################################################################################################################
+# #####################################---- Covenience test ----#####################################################
+# ########################################################################################################################
+
+#testing convergence of MrBayes
+def Convenience(path_in,output):
+    """Using Convenience to test results of MrBayes"""
+    inputs = [path_in]
+    outputs = [path_in + output]
+    options = {'cores': 10, 'memory': "100g", 'walltime': "12:00:00", 'account':"dypsidinae"}
+
+    spec = """
+    
+    cd {path_in}
+  
+    
+    Rscript --vanilla /home/kris/dypsidinae/scripts/Convenience
+
+    
+    """.format(path_in = path_in, output=output, )
+    
+    return (inputs, outputs, options, spec)
 
 # ########################################################################################################################
 # #####################################---- Astral Tree Search ----#####################################################
@@ -118,9 +168,9 @@ def MrBayes(path_in, genes):
 #Here you should stop and go to folder /home/kris/dypsidinae/MrBayes  and do cat *treefile???hedder noget andet > gene_trees.nex
 
 #Showing Posterior Probabilities
-def astral_2(path_in, gene_tree_file, output, genes):
-    """Using Astral to construct a species tree from the genetrees"""
-    inputs = [path_in]
+def Wastral(path_in, gene_tree_file, output, genes):
+    """Using weighted Astral to construct a species tree from the genetrees"""
+    inputs = [path_in + gene_tree_file]
     outputs = [path_in + output]
     options = {'cores': 10, 'memory': "100g", 'walltime': "12:00:00", 'account':"dypsidinae"}
 
@@ -128,7 +178,7 @@ def astral_2(path_in, gene_tree_file, output, genes):
     source /home/kris/miniconda3/etc/profile.d/conda.sh
     cd /home/kris/Astral/
   
-    java -D"java.library.path=lib/" -jar astral.5.15.5.jar -i /home/kris/dypsidinae/A/3.Astral/gene_trees.nex -o astral_tree_probabilities.tre 2> log_posterior_probability.out
+    /homme/kris/ASTER/bin/wastral -o astral_tree_probabilities.tre -i /home/kris/dypsidinae/3.Astral/gene_trees.nex 2> log_posterior_probability.out
     
     mv astral_tree_probabilities.tre /home/kris/dypsidinae/3.Astral/
     mv log_posterior_probability.out /home/kris/dypsidinae/3.Astral/
@@ -138,8 +188,8 @@ def astral_2(path_in, gene_tree_file, output, genes):
         
 #Showing number of genes supporting clades   
 def astral_gene_supporting(path_in, gene_tree_file, output, genes):
-    """Using Astral to construct a species tree based on the genetrees"""
-    inputs = [path_in+"gene_trees.nex"]
+    """Using Astral III to score the tree inferred with Wastral"""
+    inputs = [path_in + gene_tree_file]
     outputs = [path_in + output]
     options = {'cores': 10, 'memory': "40g", 'walltime': "24:00:00", 'account':"dypsidinae"}
 
@@ -147,10 +197,10 @@ def astral_gene_supporting(path_in, gene_tree_file, output, genes):
     source /home/kris/miniconda3/etc/profile.d/conda.sh
     cd /home/kris/Astral/
   
-    java -D"java.library.path=lib/" -jar astral.5.15.5.jar -i /home/kris/dypsidinae/A/3.Astral/gene_trees.nex -o astral_gene_probability.tre -t 2 2> log_gene_effective.out
+    java -D"java.library.path=lib/" -jar astral.5.15.5.jar -q /home/kris/dypsidinae/3.Astral/astral_tree_probabilities.tre -o astral_gene_score.tre -t 2 2> log_gene_effective.out
       
-    mv astral_gene_probability.tre /home/kris/Dypsidinae/A/3.Astral/
-    mv log_gene_effective.out /home/kris/dypsidinae/A/3.Astral/
+    mv astral_gene_probability.tre /home/kris/Dypsidinae/3.Astral/
+    mv log_gene_effective.out /home/kris/dypsidinae/3.Astral/
     
     """.format(path_in = path_in, gene_tree_file = gene_tree_file, output=output, genes = genes)
 
@@ -182,19 +232,32 @@ for i in range(0, len(genes)):
 for i in range(0, len(genes)):
     gwf.target_from_template('MrBayes'+str(i), MrBayes(genes = genes[i], path_in ="/home/kris/dypsidinae/data/nex_files/"))
 
+
+genes_that_need_to_run_longer=['reduced_299_aligned_noempty.fasta-out_clean', 'reduced_629_aligned_noempty.fasta-out_clean', 'reduced_863_aligned_noempty.fasta-out_clean', 'reduced_1064_aligned_noempty.fasta-out_clean', 'reduced_757_aligned_noempty.fasta-out_clean', 'reduced_2238_aligned_noempty.fasta-out_clean', 'reduced_204e_aligned_noempty.fasta-out_clean', 'reduced_252s_aligned_noempty.fasta-out_clean', 'reduced_136_aligned_noempty.fasta-out_clean', 'reduced_360_aligned_noempty.fasta-out_clean', 'reduced_673_aligned_noempty.fasta-out_clean', 'reduced_150_aligned_noempty.fasta-out_clean', 'reduced_323_aligned_noempty.fasta-out_clean', 'reduced_391_aligned_noempty.fasta-out_clean', 'reduced_110_aligned_noempty.fasta-out_clean', 'reduced_1171_aligned_noempty.fasta-out_clean', 'reduced_985_aligned_noempty.fasta-out_clean', 'reduced_290_aligned_noempty.fasta-out_clean', 'reduced_1007_aligned_noempty.fasta-out_clean', 'reduced_139_aligned_noempty.fasta-out_clean', 'reduced_24_aligned_noempty.fasta-out_clean', 'reduced_12_aligned_noempty.fasta-out_clean', 'reduced_2363_aligned_noempty.fasta-out_clean', 'reduced_369_aligned_noempty.fasta-out_clean', 'reduced_1168_aligned_noempty.fasta-out_clean', 'reduced_484_aligned_noempty.fasta-out_clean', 'reduced_280_aligned_noempty.fasta-out_clean', 'reduced_282_aligned_noempty.fasta-out_clean', 'reduced_2370_aligned_noempty.fasta-out_clean', 'reduced_83_aligned_noempty.fasta-out_clean', 'reduced_855_aligned_noempty.fasta-out_clean', 'reduced_231_aligned_noempty.fasta-out_clean', 'reduced_897_aligned_noempty.fasta-out_clean', 'reduced_758_aligned_noempty.fasta-out_clean', 'reduced_1201_aligned_noempty.fasta-out_clean', 'reduced_1815_aligned_noempty.fasta-out_clean', 'reduced_1020_aligned_noempty.fasta-out_clean', 'reduced_1877_aligned_noempty.fasta-out_clean', 'reduced_822_aligned_noempty.fasta-out_clean', 'reduced_1017_aligned_noempty.fasta-out_clean', 'reduced_250_aligned_noempty.fasta-out_clean', 'reduced_958_aligned_noempty.fasta-out_clean', 'reduced_1484_aligned_noempty.fasta-out_clean', 'reduced_2388_aligned_noempty.fasta-out_clean']
+
+
+#running MrBayes for genes that needs to run longer to converge
+for i in range(0, len(genes)):
+    gwf.target_from_template('MrBayes_2'+str(i), MrBayes_2_(genes_that_need_to_run_longer = genes[i], path_in ="/home/kris/dypsidinae/data/nex_files/"))
+
+
+#running Convenience
+gwf.target_from_template('Convenience', Convenience(path_in = "/home/kris/dypsidinae/data/nex_files/",
+                                                    output="convenience_output.txt"))
+
 """
 
                         
 # Running ASTRAL f
-gwf.target_from_template('astral_2', astral_2(genes = genes[i],
-                                                    path_in = "/home/kris/dypsidinae/A/3.Astral/",
+gwf.target_from_template('Wastral', Wastral(genes = genes[i],
+                                                    path_in = "/home/kris/dypsidinae/3.Astral/",
                                                     gene_tree_file="gene_trees.nex",
                                                     output="astral_tree_probabilities.tre"))
                                                         
 # Running ASTRAL f
 gwf.target_from_template('astral_gene_supporting', astral_gene_supporting(genes = genes[i],
-                                                    path_in = "/home/kris/dypsidinae/A/3.Astral/",
+                                                    path_in = "/home/kris/dypsidinae/3.Astral/",
                                                     gene_tree_file="genes_trees.nex",
-                                                    output="astral_gene_probability.tre"))
+                                                    output="astral_gene_score.tre"))
 
 """
