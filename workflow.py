@@ -139,25 +139,49 @@ def MrBayes_2(path_in, genes):
     return (inputs, outputs, options, spec)
 
 # ########################################################################################################################
-# #####################################---- Covenience test ----#####################################################
+# #####################################---- converting & discarding burnin ----############################################
 # ########################################################################################################################
-
-#testing convergence of MrBayes
-def Convenience(path_in,output):
-    """Using Convenience to test results of MrBayes"""
-    inputs = [path_in]
+def treefile(path_in, output, genes):
+    """making one file with all the genetrees, after excluding burnin"""
+      
+    inputs = [path_in + genes + "fasta-out.nex.run1.t" , path_in + genes + "fasta-out.nex.run2.t"]
     outputs = [path_in + output]
-    options = {'cores': 10, 'memory': "100g", 'walltime': "12:00:00", 'account':"dypsidinae"}
-
+    options = {'cores': 2, 'memory': "100g", 'walltime': "6:00:00", 'account':"dypsidinae"}
     spec = """
     
     cd {path_in}
+    source /home/kris/miniconda3/etc/profile.d/conda.sh
+    conda activate python3_env
+
+    python3 nexus_to_newick.py
+
+        """.format(path_in = path_in, output=output, genes = genes)
+    
+    return (inputs, outputs, options, spec)
+
+# ########################################################################################################################
+# #####################################---- random treefiles ----#########################################################
+# ########################################################################################################################
+
+#testing convergence of MrBayes
+def random_tree_sets(path_in, number, path_out, output):
+    """making random set of genetrees"""
+    inputs = [path_in]
+    outputs = [path_out + output]
+    options = {'cores': "2", 'memory': "40g", 'walltime': "8:00:00", 'account':"dypsidinae"}
+
+    spec = """
+    
+    cd /home/kris/dypsidinae/scripts/
+    source /home/kris/miniconda3/etc/profile.d/conda.sh
+    conda activate python3_env
+
+    python3 random_tree_sets.py {number}
+
+    mv *random_trees.tre {path_out}
   
     
-    Rscript --vanilla /home/kris/dypsidinae/scripts/Convenience
-
-    
-    """.format(path_in = path_in, output=output, )
+    """.format(path_in = path_in, number=number, path_out=path_out, output=output )
     
     return (inputs, outputs, options, spec)
 
@@ -165,7 +189,6 @@ def Convenience(path_in,output):
 # #####################################---- Astral Tree Search ----#####################################################
 # ########################################################################################################################
 
-#Here you should stop and go to folder /home/kris/dypsidinae/MrBayes  and do cat *treefile???hedder noget andet > gene_trees.nex
 
 #Showing Posterior Probabilities
 def Wastral(path_in, gene_tree_file, output, genes):
@@ -175,8 +198,6 @@ def Wastral(path_in, gene_tree_file, output, genes):
     options = {'cores': 10, 'memory': "100g", 'walltime': "12:00:00", 'account':"dypsidinae"}
 
     spec = """
-    source /home/kris/miniconda3/etc/profile.d/conda.sh
-    cd /home/kris/Astral/
   
     /homme/kris/ASTER/bin/wastral -o astral_tree_probabilities.tre -i /home/kris/dypsidinae/3.Astral/gene_trees.nex 2> log_posterior_probability.out
     
@@ -194,10 +215,10 @@ def astral_gene_supporting(path_in, gene_tree_file, output, genes):
     options = {'cores': 10, 'memory': "40g", 'walltime': "24:00:00", 'account':"dypsidinae"}
 
     spec = """
-    source /home/kris/miniconda3/etc/profile.d/conda.sh
+    
     cd /home/kris/Astral/
   
-    java -D"java.library.path=lib/" -jar astral.5.15.5.jar -q /home/kris/dypsidinae/3.Astral/astral_tree_probabilities.tre -o astral_gene_score.tre -t 2 2> log_gene_effective.out
+    java -D"java.library.path=lib/" -jar astral.5.15.5.jar -q /home/kris/dypsidinae/3.Astral/astral_tree_probabilities.tre -o astral_supportingscore.tre -t 2 2> log_gene_effective.out
       
     mv astral_gene_probability.tre /home/kris/Dypsidinae/3.Astral/
     mv log_gene_effective.out /home/kris/dypsidinae/3.Astral/
@@ -216,6 +237,7 @@ sp = ['95', '2015', '2', '78', '3', '4', '202', '2012', '6', '8', '10', '11', '1
 
 genes = ['reduced_2339_aligned_noempty.fasta-out_clean', 'reduced_514_aligned_noempty.fasta-out_clean' , 'reduced_1007_aligned_noempty.fasta-out_clean', 'reduced_2363_aligned_noempty.fasta-out_clean', 'reduced_51_aligned_noempty.fasta-out_clean', 'reduced_1013_aligned_noempty.fasta-out_clean', 'reduced_2370_aligned_noempty.fasta-out_clean', 'reduced_52_aligned_noempty.fasta-out_clean', 'reduced_1017_aligned_noempty.fasta-out_clean', 'reduced_2377_aligned_noempty.fasta-out_clean', 'reduced_556_aligned_noempty.fasta-out_clean', 'reduced_1020_aligned_noempty.fasta-out_clean', 'reduced_237_aligned_noempty.fasta-out_clean', 'reduced_563_aligned_noempty.fasta-out_clean', 'reduced_1025_aligned_noempty.fasta-out_clean', 'reduced_2388_aligned_noempty.fasta-out_clean', 'reduced_576_aligned_noempty.fasta-out_clean', 'reduced_1035_aligned_noempty.fasta-out_clean', 'reduced_240_aligned_noempty.fasta-out_clean', 'reduced_587_aligned_noempty.fasta-out_clean', 'reduced_1050_aligned_noempty.fasta-out_clean', 'reduced_2459_aligned_noempty.fasta-out_clean', 'reduced_604_aligned_noempty.fasta-out_clean', 'reduced_1052_aligned_noempty.fasta-out_clean', 'reduced_245_aligned_noempty.fasta-out_clean', 'reduced_609_aligned_noempty.fasta-out_clean', 'reduced_1064_aligned_noempty.fasta-out_clean', 'reduced_24_aligned_noempty.fasta-out_clean', 'reduced_61_aligned_noempty.fasta-out_clean', 'reduced_110_aligned_noempty.fasta-out_clean', 'reduced_250_aligned_noempty.fasta-out_clean', 'reduced_629_aligned_noempty.fasta-out_clean', 'reduced_1168_aligned_noempty.fasta-out_clean', 'reduced_252e_aligned_noempty.fasta-out_clean', 'reduced_630_aligned_noempty.fasta-out_clean', 'reduced_1171_aligned_noempty.fasta-out_clean', 'reduced_252p_aligned_noempty.fasta-out_clean', 'reduced_637_aligned_noempty.fasta-out_clean', 'reduced_1197_aligned_noempty.fasta-out_clean', 'reduced_252s_aligned_noempty.fasta-out_clean', 'reduced_673_aligned_noempty.fasta-out_clean', 'reduced_1201_aligned_noempty.fasta-out_clean', 'reduced_2550_aligned_noempty.fasta-out_clean', 'reduced_680_aligned_noempty.fasta-out_clean', 'reduced_120_aligned_noempty.fasta-out_clean', 'reduced_2561_aligned_noempty.fasta-out_clean', 'reduced_717_aligned_noempty.fasta-out_clean', 'reduced_122_aligned_noempty.fasta-out_clean', 'reduced_257_aligned_noempty.fasta-out_clean', 'reduced_727_aligned_noempty.fasta-out_clean', 'reduced_125_aligned_noempty.fasta-out_clean', 'reduced_267_aligned_noempty.fasta-out_clean', 'reduced_732_aligned_noempty.fasta-out_clean', 'reduced_12_aligned_noempty.fasta-out_clean', 'reduced_269_aligned_noempty.fasta-out_clean', 'reduced_736_aligned_noempty.fasta-out_clean', 'reduced_136_aligned_noempty.fasta-out_clean', 'reduced_277_aligned_noempty.fasta-out_clean', 'reduced_740_aligned_noempty.fasta-out_clean', 'reduced_139_aligned_noempty.fasta-out_clean', 'reduced_280_aligned_noempty.fasta-out_clean', 'reduced_743_aligned_noempty.fasta-out_clean', 'reduced_1484_aligned_noempty.fasta-out_clean', 'reduced_281_aligned_noempty.fasta-out_clean', 'reduced_757_aligned_noempty.fasta-out_clean', 'reduced_148_aligned_noempty.fasta-out_clean', 'reduced_282_aligned_noempty.fasta-out_clean', 'reduced_758_aligned_noempty.fasta-out_clean', 'reduced_1494_aligned_noempty.fasta-out_clean', 'reduced_290_aligned_noempty.fasta-out_clean', 'reduced_785_aligned_noempty.fasta-out_clean', 'reduced_14_aligned_noempty.fasta-out_clean', 'reduced_293_aligned_noempty.fasta-out_clean', 'reduced_790_aligned_noempty.fasta-out_clean', 'reduced_150_aligned_noempty.fasta-out_clean', 'reduced_299_aligned_noempty.fasta-out_clean', 'reduced_793_aligned_noempty.fasta-out_clean', 'reduced_1615_aligned_noempty.fasta-out_clean', 'reduced_305_aligned_noempty.fasta-out_clean', 'reduced_7_aligned_noempty.fasta-out_clean', 'reduced_168_aligned_noempty.fasta-out_clean', 'reduced_308_aligned_noempty.fasta-out_clean', 'reduced_807_aligned_noempty.fasta-out_clean', 'reduced_17_aligned_noempty.fasta-out_clean', 'reduced_310_aligned_noempty.fasta-out_clean', 'reduced_808_aligned_noempty.fasta-out_clean', 'reduced_1801_aligned_noempty.fasta-out_clean', 'reduced_323_aligned_noempty.fasta-out_clean', 'reduced_822_aligned_noempty.fasta-out_clean', 'reduced_1815_aligned_noempty.fasta-out_clean', 'reduced_326_aligned_noempty.fasta-out_clean', 'reduced_825_aligned_noempty.fasta-out_clean', 'reduced_182_aligned_noempty.fasta-out_clean', 'reduced_32e_aligned.fasta-out_clean', 'reduced_82_aligned_noempty.fasta-out_clean', 'reduced_1842_aligned_noempty.fasta-out_clean', 'reduced_32s_aligned_noempty.fasta-out_clean', 'reduced_83_aligned_noempty.fasta-out_clean', 'reduced_1854_aligned_noempty.fasta-out_clean', 'reduced_332_aligned_noempty.fasta-out_clean', 'reduced_84_aligned_noempty.fasta-out_clean', 'reduced_1877_aligned_noempty.fasta-out_clean', 'reduced_357_aligned_noempty.fasta-out_clean', 'reduced_855_aligned_noempty.fasta-out_clean', 'reduced_1901_aligned_noempty.fasta-out_clean', 'reduced_360_aligned_noempty.fasta-out_clean', 'reduced_863_aligned_noempty.fasta-out_clean', 'reduced_191_aligned_noempty.fasta-out_clean', 'reduced_362_aligned_noempty.fasta-out_clean', 'reduced_872_aligned_noempty.fasta-out_clean', 'reduced_194_aligned_noempty.fasta-out_clean', 'reduced_363_aligned_noempty.fasta-out_clean', 'reduced_874_aligned_noempty.fasta-out_clean', 'reduced_197_aligned_noempty.fasta-out_clean', 'reduced_369_aligned_noempty.fasta-out_clean', 'reduced_883e_aligned_noempty.fasta-out_clean', 'reduced_1986_aligned_noempty.fasta-out_clean', 'reduced_378e_aligned_noempty.fasta-out_clean', 'reduced_883n_aligned_noempty.fasta-out_clean', 'reduced_201_aligned_noempty.fasta-out_clean', 'reduced_378s_aligned_noempty.fasta-out_clean', 'reduced_886_aligned_noempty.fasta-out_clean', 'reduced_204e_aligned_noempty.fasta-out_clean', 'reduced_38_aligned_noempty.fasta-out_clean', 'reduced_88_aligned_noempty.fasta-out_clean', 'reduced_204s_aligned_noempty.fasta-out_clean', 'reduced_391_aligned_noempty.fasta-out_clean', 'reduced_897_aligned_noempty.fasta-out_clean', 'reduced_2056_aligned_noempty.fasta-out_clean', 'reduced_392_aligned_noempty.fasta-out_clean', 'reduced_89_aligned_noempty.fasta-out_clean', 'reduced_207_aligned_noempty.fasta-out_clean', 'reduced_415_aligned_noempty.fasta-out_clean', 'reduced_938_aligned_noempty.fasta-out_clean', 'reduced_215_aligned_noempty.fasta-out_clean', 'reduced_417_aligned_noempty.fasta-out_clean', 'reduced_948_aligned_noempty.fasta-out_clean', 'reduced_2164_aligned_noempty.fasta-out_clean', 'reduced_421_aligned_noempty.fasta-out_clean', 'reduced_94_aligned_noempty.fasta-out_clean', 'reduced_218_aligned_noempty.fasta-out_clean', 'reduced_449_aligned_noempty.fasta-out_clean', 'reduced_950_aligned_noempty.fasta-out_clean', 'reduced_21_aligned_noempty.fasta-out_clean', 'reduced_464_aligned_noempty.fasta-out_clean', 'reduced_958_aligned_noempty.fasta-out_clean', 'reduced_2238_aligned_noempty.fasta-out_clean', 'reduced_484_aligned_noempty.fasta-out_clean', 'reduced_964_aligned_noempty.fasta-out_clean', 'reduced_225_aligned_noempty.fasta-out_clean', 'reduced_490_aligned_noempty.fasta-out_clean', 'reduced_977_aligned_noempty.fasta-out_clean', 'reduced_226_aligned_noempty.fasta-out_clean', 'reduced_497_aligned_noempty.fasta-out_clean', 'reduced_982_aligned_noempty.fasta-out_clean', 'reduced_2291_aligned_noempty.fasta-out_clean', 'reduced_4_aligned_noempty.fasta-out_clean', 'reduced_985_aligned_noempty.fasta-out_clean', 'reduced_231_aligned_noempty.fasta-out_clean', 'reduced_508_aligned_noempty.fasta-out_clean', 'reduced_989_aligned_noempty.fasta-out_clean']
 
+genes_converged=['reduced_2339_aligned_noempty.fasta-out_clean', 'reduced_514_aligned_noempty.fasta-out_clean', 'reduced_1007_aligned_noempty.fasta-out_clean', 'reduced_51_aligned_noempty.fasta-out_clean', 'reduced_1013_aligned_noempty.fasta-out_clean', 'reduced_2370_aligned_noempty.fasta-out_clean', 'reduced_52_aligned_noempty.fasta-out_clean', 'reduced_1017_aligned_noempty.fasta-out_clean', 'reduced_2377_aligned_noempty.fasta-out_clean', 'reduced_556_aligned_noempty.fasta-out_clean', 'reduced_1020_aligned_noempty.fasta-out_clean', 'reduced_237_aligned_noempty.fasta-out_clean', 'reduced_563_aligned_noempty.fasta-out_clean', 'reduced_1025_aligned_noempty.fasta-out_clean', 'reduced_576_aligned_noempty.fasta-out_clean', 'reduced_1035_aligned_noempty.fasta-out_clean', 'reduced_240_aligned_noempty.fasta-out_clean', 'reduced_587_aligned_noempty.fasta-out_clean', 'reduced_1050_aligned_noempty.fasta-out_clean', 'reduced_2459_aligned_noempty.fasta-out_clean', 'reduced_604_aligned_noempty.fasta-out_clean', 'reduced_1052_aligned_noempty.fasta-out_clean', 'reduced_245_aligned_noempty.fasta-out_clean', 'reduced_609_aligned_noempty.fasta-out_clean', 'reduced_1064_aligned_noempty.fasta-out_clean', 'reduced_24_aligned_noempty.fasta-out_clean', 'reduced_61_aligned_noempty.fasta-out_clean', 'reduced_110_aligned_noempty.fasta-out_clean', 'reduced_250_aligned_noempty.fasta-out_clean', 'reduced_1168_aligned_noempty.fasta-out_clean', 'reduced_252e_aligned_noempty.fasta-out_clean', 'reduced_630_aligned_noempty.fasta-out_clean', 'reduced_1171_aligned_noempty.fasta-out_clean', 'reduced_252p_aligned_noempty.fasta-out_clean', 'reduced_637_aligned_noempty.fasta-out_clean', 'reduced_1197_aligned_noempty.fasta-out_clean', 'reduced_673_aligned_noempty.fasta-out_clean', 'reduced_1201_aligned_noempty.fasta-out_clean', 'reduced_2550_aligned_noempty.fasta-out_clean', 'reduced_680_aligned_noempty.fasta-out_clean', 'reduced_120_aligned_noempty.fasta-out_clean', 'reduced_2561_aligned_noempty.fasta-out_clean', 'reduced_717_aligned_noempty.fasta-out_clean', 'reduced_122_aligned_noempty.fasta-out_clean', 'reduced_257_aligned_noempty.fasta-out_clean', 'reduced_727_aligned_noempty.fasta-out_clean', 'reduced_125_aligned_noempty.fasta-out_clean', 'reduced_267_aligned_noempty.fasta-out_clean', 'reduced_732_aligned_noempty.fasta-out_clean', 'reduced_12_aligned_noempty.fasta-out_clean', 'reduced_269_aligned_noempty.fasta-out_clean', 'reduced_736_aligned_noempty.fasta-out_clean', 'reduced_136_aligned_noempty.fasta-out_clean', 'reduced_277_aligned_noempty.fasta-out_clean', 'reduced_740_aligned_noempty.fasta-out_clean', 'reduced_139_aligned_noempty.fasta-out_clean', 'reduced_280_aligned_noempty.fasta-out_clean', 'reduced_743_aligned_noempty.fasta-out_clean', 'reduced_1484_aligned_noempty.fasta-out_clean', 'reduced_281_aligned_noempty.fasta-out_clean', 'reduced_148_aligned_noempty.fasta-out_clean', 'reduced_758_aligned_noempty.fasta-out_clean', 'reduced_1494_aligned_noempty.fasta-out_clean', 'reduced_785_aligned_noempty.fasta-out_clean', 'reduced_14_aligned_noempty.fasta-out_clean', 'reduced_293_aligned_noempty.fasta-out_clean', 'reduced_790_aligned_noempty.fasta-out_clean', 'reduced_150_aligned_noempty.fasta-out_clean', 'reduced_793_aligned_noempty.fasta-out_clean', 'reduced_1615_aligned_noempty.fasta-out_clean', 'reduced_305_aligned_noempty.fasta-out_clean', 'reduced_7_aligned_noempty.fasta-out_clean', 'reduced_168_aligned_noempty.fasta-out_clean', 'reduced_308_aligned_noempty.fasta-out_clean', 'reduced_807_aligned_noempty.fasta-out_clean', 'reduced_17_aligned_noempty.fasta-out_clean', 'reduced_310_aligned_noempty.fasta-out_clean', 'reduced_808_aligned_noempty.fasta-out_clean', 'reduced_1801_aligned_noempty.fasta-out_clean', 'reduced_822_aligned_noempty.fasta-out_clean', 'reduced_1815_aligned_noempty.fasta-out_clean', 'reduced_326_aligned_noempty.fasta-out_clean', 'reduced_825_aligned_noempty.fasta-out_clean', 'reduced_182_aligned_noempty.fasta-out_clean', 'reduced_32e_aligned.fasta-out_clean', 'reduced_82_aligned_noempty.fasta-out_clean', 'reduced_1842_aligned_noempty.fasta-out_clean', 'reduced_32s_aligned_noempty.fasta-out_clean', 'reduced_83_aligned_noempty.fasta-out_clean', 'reduced_1854_aligned_noempty.fasta-out_clean', 'reduced_332_aligned_noempty.fasta-out_clean', 'reduced_84_aligned_noempty.fasta-out_clean', 'reduced_1877_aligned_noempty.fasta-out_clean', 'reduced_357_aligned_noempty.fasta-out_clean', 'reduced_1901_aligned_noempty.fasta-out_clean', 'reduced_362_aligned_noempty.fasta-out_clean', 'reduced_872_aligned_noempty.fasta-out_clean', 'reduced_194_aligned_noempty.fasta-out_clean', 'reduced_363_aligned_noempty.fasta-out_clean', 'reduced_874_aligned_noempty.fasta-out_clean', 'reduced_197_aligned_noempty.fasta-out_clean', 'reduced_369_aligned_noempty.fasta-out_clean', 'reduced_883e_aligned_noempty.fasta-out_clean', 'reduced_1986_aligned_noempty.fasta-out_clean', 'reduced_378e_aligned_noempty.fasta-out_clean', 'reduced_883n_aligned_noempty.fasta-out_clean', 'reduced_201_aligned_noempty.fasta-out_clean', 'reduced_378s_aligned_noempty.fasta-out_clean', 'reduced_886_aligned_noempty.fasta-out_clean', 'reduced_38_aligned_noempty.fasta-out_clean', 'reduced_88_aligned_noempty.fasta-out_clean', 'reduced_204s_aligned_noempty.fasta-out_clean', 'reduced_391_aligned_noempty.fasta-out_clean', 'reduced_897_aligned_noempty.fasta-out_clean', 'reduced_2056_aligned_noempty.fasta-out_clean', 'reduced_392_aligned_noempty.fasta-out_clean', 'reduced_89_aligned_noempty.fasta-out_clean', 'reduced_207_aligned_noempty.fasta-out_clean', 'reduced_415_aligned_noempty.fasta-out_clean', 'reduced_938_aligned_noempty.fasta-out_clean', 'reduced_215_aligned_noempty.fasta-out_clean', 'reduced_417_aligned_noempty.fasta-out_clean', 'reduced_948_aligned_noempty.fasta-out_clean', 'reduced_2164_aligned_noempty.fasta-out_clean', 'reduced_421_aligned_noempty.fasta-out_clean', 'reduced_94_aligned_noempty.fasta-out_clean', 'reduced_218_aligned_noempty.fasta-out_clean', 'reduced_449_aligned_noempty.fasta-out_clean', 'reduced_950_aligned_noempty.fasta-out_clean', 'reduced_21_aligned_noempty.fasta-out_clean', 'reduced_464_aligned_noempty.fasta-out_clean', 'reduced_958_aligned_noempty.fasta-out_clean', 'reduced_484_aligned_noempty.fasta-out_clean', 'reduced_964_aligned_noempty.fasta-out_clean', 'reduced_225_aligned_noempty.fasta-out_clean', 'reduced_490_aligned_noempty.fasta-out_clean', 'reduced_977_aligned_noempty.fasta-out_clean', 'reduced_226_aligned_noempty.fasta-out_clean', 'reduced_497_aligned_noempty.fasta-out_clean', 'reduced_982_aligned_noempty.fasta-out_clean', 'reduced_2291_aligned_noempty.fasta-out_clean', 'reduced_4_aligned_noempty.fasta-out_clean', 'reduced_231_aligned_noempty.fasta-out_clean', 'reduced_508_aligned_noempty.fasta-out_clean', 'reduced_989_aligned_noempty.fasta-out_clean']
 
 
 #Running IQTREE for trimmed and aligned files
@@ -241,12 +263,16 @@ for i in range(0, len(genes)):
     gwf.target_from_template('MrBayes_2'+str(i), MrBayes_2_(genes_that_need_to_run_longer = genes[i], path_in ="/home/kris/dypsidinae/data/nex_files/"))
 
 
-#running Convenience
-gwf.target_from_template('Convenience', Convenience(path_in = "/home/kris/dypsidinae/data/nex_files/",
-                                                    output="convenience_output.txt"))
+#
+for i in range(0, len(genes)):
+    gwf.target_from_template('treefile_'+str(i), treefile(path_in = "/home/kris/dypsidinae/data/nex_files/",
+                                                    output= str(i)+"_genetree.tre"))
 
-"""
-
+for i in range(1000):
+    gwf.target_from_template('random_tree_sets_'+str(i), random_tree_sets(path_in = "/home/kris/dypsidinae/data/nex_files/",
+                                                    number=i,
+                                                    path_out="/home/kris/dypsidinae/Astral/",
+                                                    output=str(i)+"random_trees.tre"))
                         
 # Running ASTRAL f
 gwf.target_from_template('Wastral', Wastral(genes = genes[i],
@@ -257,7 +283,7 @@ gwf.target_from_template('Wastral', Wastral(genes = genes[i],
 # Running ASTRAL f
 gwf.target_from_template('astral_gene_supporting', astral_gene_supporting(genes = genes[i],
                                                     path_in = "/home/kris/dypsidinae/3.Astral/",
-                                                    gene_tree_file="genes_trees.nex",
-                                                    output="astral_gene_score.tre"))
+                                                    gene_tree="astral_tree_probabilities.tre",
+                                                    output="astral_supportingscore.tre"))
 
-"""
+
