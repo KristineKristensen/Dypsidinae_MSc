@@ -3,37 +3,43 @@
 import os, argparse
 os.chdir("/home/kris/dypsidinae/2.MrBayes/")
 
+# taking the genes argument from the gwf workflow
 parser = argparse.ArgumentParser()
 parser.add_argument("genes")
 args = parser.parse_args()
 genes = str(args.genes)
 
 charset=open("/home/kris/dypsidinae/1.IQtree_2/"+genes+".part.best_scheme.nex").readlines()
-
-partitions_intron=str(charset[2]).split()
-partitions_exon= str(charset[3]).split()
 partitions= ""
 names=""
 bases_intron=[]
 bases_exon= []
 
+#making list with the partitions
+partitions_intron=str(charset[2]).split()
+partitions_exon= str(charset[3]).split()
+
+#keeping only where eah partition starts and ends
 for i in partitions_intron:
     if "-" in i:
         bases_intron.append(i)
+# writing the partitions in the format of MrBayes
 for n in range(len(bases_intron)):
         partitions=partitions +"\t charset intron_"+str(n)+" = "+str(bases_intron[n])+";\n"
-        names=names+"intron_"+str(n)+", "
+        names=names+"intron_"+str(n)+", " #defining a name for the parition which is needed for MrBayes
 partitions=partitions[:-3]+";\n"
 
+#keeping only where eah partition starts and ends
 for b in partitions_exon:
     if "-" in b:
         bases_exon.append(b)
+# writing the partitions in the format of MrBayes
 for n in range(len(bases_exon)):
         partitions=partitions +"\t charset exon_"+str(n)+" = "+str(bases_exon[n])+";\n"
         names=names+"exon_"+str(n)+", "
 partitions=partitions[:-3]+";\n"
 
-
+#commands needed for MrBayes
 begin= "begin mrbayes;\n\n"
 autoclose= "\t set autoclose=yes; [makes automatic execution]\n"
 make_log= "\t log start filename="+genes+".log replace;\n"
@@ -44,16 +50,14 @@ unlink= " unlink revmat=(all) pinvar=(all) shape=(all) statefreq=(all); \n"
 
 block= [begin,autoclose, str(make_log), str(file_to_execute), partitions, str(defining_partition),prset_all, unlink]
 
-#taking model from IQtree and defining the model for the MrBayes block
-models=[charset[5],charset[6]]
-
-list_for_iteration= names[:-2].split(", ")
+#Defining the model for the MrBayes block
+list_for_iteration= names[:-2].split(", ") #keeping only the model information
 for nr,name in enumerate(list_for_iteration, start=1):
     if "intron" in name:
-        i =models[0]
+        i =charset[5] #taking model from IQtree 
     elif "exon" in name:
-         i=models[1]
-
+         i=charset[6] #taking model from IQtree 
+    #Finding the model defined by IQtree and writing it into the format of MrBayes
     if "GTR" in i or "SYM" in i:
         nucleotide_model ="\t lset applyto=("+str(nr)+") nst=6 "
     elif "HKY" in i or "HKY85" in i or "K80" in i or "K2P" in i:
@@ -62,34 +66,33 @@ for nr,name in enumerate(list_for_iteration, start=1):
          nucleotide_model= "\t lset applyto=("+str(nr)+") nst=1 "
     else:
          nucleotide_model= "not recognized" 
-
-
+    #setting base frequencies to equal if the model is SYM, JC, JC69, K80, K2P or if IQtree has set base frequencies to equal (FQ)     
     if "SYM" in i or "JC" in i or "JC69" in i or "K80" in i or "K2P" in i or "+FQ" in i:
           base_freq= "\t prset applyto=("+str(nr)+") statefreqpr= fixed(equal); \n"
     else:
          base_freq=""
 
     #rate varation
-    #If IQtree gives I
+    #If IQtree gives I, defining invariable sites as rate variation in MrBayes
     if "+I" in i and "+G" not in i:
         rate_variation= " rates=propinv ; \n"
-    #If IQtree gives G
+    #If IQtree gives G, defining gamma distribution in MrBayes
     elif "+G" in i and "+I" not in i:
         start = "+G"
         end = ":"
         index_s = i.partition(start)
-        ngammacat=str(index_s[2]).partition(end)
+        ngammacat=str(index_s[2]).partition(end) # defining the number of discrete categories used to approximate the gamma distribution
         rate_variation= " rates=gamma ngammacat="+ngammacat[0]+"; \n"
-    #If IQtree gives G+I
+    #If IQtree gives G+I, setting gamma and invariable site in MrBayes
     elif "+I" in i and "+G" in i:
         start = "+G"
         end = ":"
         index_s = i.partition(start)
-        ngammacat=str(index_s[2]).partition(end)
-        rate_variation= " rates=invgamma ngammacat="+ngammacat[0]+"; \n"
+        ngammacat=str(index_s[2]).partition(end) # defining the number of discrete categories used to approximate the gamma distribution
+        rate_variation= " rates=invgamma ngammacat="+ngammacat[0]+"; \n" 
     else:
-        rate_variation= "; \n" 
-
+        rate_variation= "; \n"  #assuming that all characters evolve at the same rate
+    #adding the model to the MrBayes block
     block.append(str(nucleotide_model)+str(rate_variation))
     block.append(str(base_freq))
 
@@ -100,7 +103,6 @@ block.append("END;")
 
 #Write MrBayes block
 MrBayes_block = open(genes+"_MrBayes_block.nex", 'w')
-
 for i in block:
       MrBayes_block.write(i)
 
