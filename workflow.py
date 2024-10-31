@@ -245,7 +245,7 @@ def random_tree_sets(path_in, number, path_out, output):
 
 #Showing Posterior Probabilities
 def astral4(path_in, gene_tree_file,number, output):
-    """Using Astral 4 to construct species trees from the gene trees"""
+    """Using Astral 4 to construct species trees from the 1000 gene tree files"""
     inputs = [path_in + gene_tree_file]
     outputs = [path_in + output]
     options = {'cores': '16', 'memory': "100g", 'walltime': "24:00:00", 'account':"dypsidinae"}
@@ -259,73 +259,53 @@ def astral4(path_in, gene_tree_file,number, output):
     
     return (inputs, outputs, options, spec)
 
-# ########################################################################################################################
-# #####################################---- Astral4 Tree Search species trees----#########################################
-# ########################################################################################################################
-
-#Showing Posterior Probabilities
-def astral(path_in, gene_tree_file, output):
-    """Using Astral 4 to construct a species tree"""
-    inputs = [path_in]
-    outputs = [path_in + output]
-    options = {'cores': '16', 'memory': "100g", 'walltime': "24:00:00", 'account':"dypsidinae"}
-
-    spec = """
-    cd {path_in}
-    cat *_astral_tree_probabilities.tre > species_trees.tre
-    /home/kris/ASTER/bin/astral4 -t 16 -o consensus_astral_tree.tre species_trees.tre 2>consensus_log_astral.out
-    
-
-    """.format(path_in = path_in, output=output)
-    
-    return (inputs, outputs, options, spec)
-
-
-# ########################################################################################################################
-# #####################################----wAstral Tree Search species trees----#########################################
-# ########################################################################################################################
-
-#Showing Posterior Probabilities
-def wastral(path_in, output):
-    """Using weighted Astral to construct a species tree"""
-    inputs = [path_in]
-    outputs = [path_in + output]
-    options = {'cores': '16', 'memory': "100g", 'walltime': "24:00:00", 'account':"dypsidinae"}
-
-    spec = """
-    cd {path_in}
-    /home/kris/ASTER/bin/wastral -t 16 -o wastral_tree.tre species_trees.tre 2>wastral__log.out
-
-
-    """.format(path_in = path_in, output=output)
-
-    return (inputs, outputs, options, spec)
 
 
 # #######################################################################################################################
-# #####################################---- Astral Tree Search ----#####################################################
+# #####################################---- Astral into MrBayes ----#####################################################
 # #########################################################################################################################
 
 #Showing number of species trees supporting clades
-def astral_gene_supporting(path_in,input, output):
-    """Using Astral3 to construct a species tree based on the genetrees"""
+def astral_2_MrBayes(path_in,input, output):
+    """converting the 1000 Astral trees into one file for MrBayes"""
     inputs = [path_in+input]
     outputs = [path_in + output]
-    options = {'cores': '16', 'memory': "40g", 'walltime': "24:00:00", 'account':"dypsidinae"}
+    options = {'cores': '1', 'memory': "40g", 'walltime': "4:00:00", 'account':"dypsidinae"}
 
     spec = """
 
-    cd /home/kris/Astral/
+    cd /home/kris/dypsidinae/scripts
 
-    java -D"java.library.path=lib/" -jar astral.5.7.8.jar -q {path_in}{input} -t 2 -o {path_in}wAstral_scored.tre -i {path_in}species_trees.tre 2>wastral_log_concensus_scored_tree.out
-    mv consensus_astral_tree.tre /home/kris/dypsidinae/Astral/
-    mv log_concensus_scored_tree.out /home/kris/dypsidinae/Astral/
+    #activating the enviroment
+    source /home/kris/miniconda3/etc/profile.d/conda.sh
+    conda activate python3_env
+
+    python3 astral_for_mrbayes.py
 
     """.format(path_in = path_in, input=input, output=output)
 
     return (inputs, outputs, options, spec)
 
+# ########################################################################################################################
+# ##############################################---- MrBayes_consensus tree ----##########################################
+# ########################################################################################################################
 
+def consensus_tree(path_in, input, output):
+    """Using MrBayes to finde consensus tree"""
+    inputs = [path_in+input]
+    outputs = [output]
+    options = {'cores': "16", 'memory': "100g", 'walltime': "8:00:00", 'account':"dypsidinae"}
+
+    spec = """
+
+    #Activate MrBayes
+    cd /home/kris/dypsidinae/programs/MrBayes-3.2.7a/bin/    
+    ./mb  concensus.nex
+
+
+    """.format(path_in = path_in, input=input, output=output)
+
+    return (inputs, outputs, options, spec)
 
 ########################################################################################################################
 ######################################################---- RUN ----#####################################################
@@ -403,3 +383,11 @@ gwf.target_from_template('wastral', wastral(path_in = "/home/kris/dypsidinae/Ast
 gwf.target_from_template('astral_gene_supporting', astral_gene_supporting(path_in = "/home/kris/dypsidinae/Astral/",
                                                     input="wastral_tree.tre",
                                                     output="wastral_scored.tre"))
+#making file for MrBayes
+gwf.target_from_template('astral_2_MrBayes, astral_2_MrBayes(path_in = "/home/kris/dypsidinae/Astral/",
+                                                    input= *"_astral_tree_probabilities.tre",
+                                                    output="astral_for_mrbayes.run1.t"))
+
+#making consensus tree with MrBayes
+gwf.target_from_template('consensus_tree', consensus_tree(path_in= "/home/kris/dypsidinae/Astral/", input= "astral_for_mrbayes.run1.t",
+                                                    output="astral_for_mrbayes.run1.t.con.tre"))
