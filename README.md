@@ -8,9 +8,9 @@ Workflow_with_heyduk.py was used to run the analysis on Genome.au.dk. For this i
 1. MrBayes_script.py is a script used to make a MrBayes block using the resutls from IQtree ModelFinder. The script was changed accroding to the desired number of generations and when genes needed to run longer append=yes was added, so MrBayes continued from the previous analysis.
 2. nexus to newick.py is a script used for converting the trees from nexus to newick format and making one file with the 1000 genetrees from the two MrBayes runs.
 3. make_random_treesets.py is a script that takes the one random genetree from the posterior distribution from each gene that can be used by IQtree
-4. astral to mrBayes
+4. converting to MrBayes.py is used for removing supportvalues in the tree, so only the branch lengths is kept.
 5. make_nexus.R used to convert the IQtrees into a nexus format that MrBayes can read.
-6. rename
+6. format_nexus.py is a script for changeing the format of the nexus file, to resemple the nexus file that MrBayes creates.
 7. Run MrBayes with the command sumt 
 
 # Second analysis
