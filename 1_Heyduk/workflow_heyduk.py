@@ -12,7 +12,7 @@ gwf = Workflow()
 # ########################################################################################################################
 
 def iqtree(path_in, genes):
-    """Using IQTREE to find the best model with ModelFinder"""
+    """Using IQTREE to find the best model"""
     inputs = [path_in+genes+".fasta", path_in+genes+".part"]
     outputs = ["/home/kris/dypsidinae/1.IQtree_2/"+genes+".part.treefile"]
     options = {'cores': 2, 'memory': "40g", 'walltime': "12:00:00", 'account':"dypsidinae"}
@@ -97,6 +97,7 @@ def MrBayes(path_in, genes):
 
     return (inputs, outputs, options, spec) 
 
+#Stop and check if genes have converged
 # ########################################################################################################################
 # ##############################################---- MrBayes_2 ----#########################################################
 # ########################################################################################################################
@@ -127,13 +128,13 @@ def MrBayes_2(path_in, genes):
     return (inputs, outputs, options, spec)
 
 
-
+#Stop and check if genes have converged
 # ########################################################################################################################
 # ##############################################---- MrBayes_3 ----#########################################################
 # ########################################################################################################################
 
 def MrBayes_3(path_in, genes):
-    """Using MrBayes to find the best model for genes that did not converge in the second round"""
+    """Using MrBayes to find the best model for genes that did not converge the second time"""
     inputs = [path_in+genes+".fasta-out.nex"]
     outputs = ["/home/kris/dypsidinae/programs/MrBayes-3.2.7a/bin/"+genes+"_3.log"]
     options = {'cores': "16", 'memory': "100g", 'walltime': "12:00:00", 'account':"dypsidinae"}
@@ -156,7 +157,7 @@ def MrBayes_3(path_in, genes):
 
     return (inputs, outputs, options, spec)
 
-
+#Stop and check if genes have converged
 # ################################################################################################################
 # ##############################################---- MrBayes_4 ----#########################################################
 # ########################################################################################################################
@@ -189,7 +190,6 @@ def MrBayes_4(path_in, genes):
 # ########################################################################################################################
 # #####################################---- converting & discarding burnin ----############################################
 # ########################################################################################################################
-
 def treefile(path_in, output, genes):
     """Converting from nexus to newick format and making one file with genetrees from both MrBayes runs, where burnin is excluded"""
       
@@ -215,7 +215,7 @@ def treefile(path_in, output, genes):
 # ########################################################################################################################
 
 def random_tree_sets(path_in, number, path_out, output):
-    """making random sets of gene trees"""
+    """making random set of genetrees"""
     inputs = [path_in]
     outputs = [path_out + output]
     options = {'cores': "2", 'memory': "40g", 'walltime': "8:00:00", 'account':"dypsidinae"}
@@ -240,12 +240,12 @@ def random_tree_sets(path_in, number, path_out, output):
 
 
 # ########################################################################################################################
-# ################---- Astral4 Tree Search on gene trees from the posteriror distribution ----############################
+# #####################################---- Astral4 Tree Search ----#####################################################
 # ########################################################################################################################
 
 #Showing Posterior Probabilities
 def astral4(path_in, gene_tree_file,number, output):
-    """Using Astral 4 to construct species trees from the 1000 gene tree files"""
+    """Using Astral to construct a species tree from the genetrees"""
     inputs = [path_in + gene_tree_file]
     outputs = [path_in + output]
     options = {'cores': '16', 'memory': "100g", 'walltime': "24:00:00", 'account':"dypsidinae"}
@@ -254,10 +254,10 @@ def astral4(path_in, gene_tree_file,number, output):
     cd {path_in}
     /home/kris/ASTER/bin/astral4 -t 16 -o {number}_astral_tree_probabilities.tre {gene_tree_file} 2>{number}_log_astral.out
     
-
     """.format(path_in = path_in, gene_tree_file = gene_tree_file, number=number, output=output)
     
     return (inputs, outputs, options, spec)
+
 
 
 
@@ -265,10 +265,9 @@ def astral4(path_in, gene_tree_file,number, output):
 # #####################################---- Astral into MrBayes ----#####################################################
 # #########################################################################################################################
 
-#Showing number of species trees supporting clades
-def astral_2_MrBayes(path_in,input, output):
+def astral_2_MrBayes(path_in,output):
     """converting the 1000 Astral trees into one file for MrBayes"""
-    inputs = [path_in+input]
+    inputs = [path_in]
     outputs = [path_in + output]
     options = {'cores': '1', 'memory': "40g", 'walltime': "4:00:00", 'account':"dypsidinae"}
 
@@ -278,34 +277,14 @@ def astral_2_MrBayes(path_in,input, output):
 
     #activating the enviroment
     source /home/kris/miniconda3/etc/profile.d/conda.sh
-    conda activate python3_env
+    conda activate base
 
-    python3 astral_for_mrbayes.py
+    python astral_2_mrbayes.py
 
-    """.format(path_in = path_in, input=input, output=output)
-
-    return (inputs, outputs, options, spec)
-
-# ########################################################################################################################
-# ##############################################---- MrBayes_consensus tree ----##########################################
-# ########################################################################################################################
-
-def consensus_tree(path_in, input, output):
-    """Using MrBayes to finde consensus tree"""
-    inputs = [path_in+input]
-    outputs = [output]
-    options = {'cores': "16", 'memory': "100g", 'walltime': "8:00:00", 'account':"dypsidinae"}
-
-    spec = """
-
-    #Activate MrBayes
-    cd /home/kris/dypsidinae/programs/MrBayes-3.2.7a/bin/    
-    ./mb  concensus.nex
-
-
-    """.format(path_in = path_in, input=input, output=output)
+    """.format(path_in = path_in, output=output)
 
     return (inputs, outputs, options, spec)
+
 
 ########################################################################################################################
 ######################################################---- RUN ----#####################################################
@@ -325,6 +304,7 @@ genes_v4= ['reduced_204e_aligned_noempty.fasta-out_clean', 'reduced_191_aligned_
 genes_converged=['reduced_2339_aligned_noempty.fasta-out_clean', 'reduced_514_aligned_noempty.fasta-out_clean', 'reduced_1007_aligned_noempty.fasta-out_clean', 'reduced_51_aligned_noempty.fasta-out_clean', 'reduced_1013_aligned_noempty.fasta-out_clean', 'reduced_2370_aligned_noempty.fasta-out_clean', 'reduced_52_aligned_noempty.fasta-out_clean', 'reduced_1017_aligned_noempty.fasta-out_clean', 'reduced_2377_aligned_noempty.fasta-out_clean', 'reduced_556_aligned_noempty.fasta-out_clean', 'reduced_1020_aligned_noempty.fasta-out_clean', 'reduced_237_aligned_noempty.fasta-out_clean', 'reduced_563_aligned_noempty.fasta-out_clean', 'reduced_1025_aligned_noempty.fasta-out_clean', 'reduced_576_aligned_noempty.fasta-out_clean', 'reduced_1035_aligned_noempty.fasta-out_clean', 'reduced_240_aligned_noempty.fasta-out_clean', 'reduced_587_aligned_noempty.fasta-out_clean', 'reduced_1050_aligned_noempty.fasta-out_clean', 'reduced_2459_aligned_noempty.fasta-out_clean', 'reduced_604_aligned_noempty.fasta-out_clean', 'reduced_1052_aligned_noempty.fasta-out_clean', 'reduced_245_aligned_noempty.fasta-out_clean', 'reduced_609_aligned_noempty.fasta-out_clean', 'reduced_1064_aligned_noempty.fasta-out_clean', 'reduced_24_aligned_noempty.fasta-out_clean', 'reduced_61_aligned_noempty.fasta-out_clean', 'reduced_110_aligned_noempty.fasta-out_clean', 'reduced_250_aligned_noempty.fasta-out_clean', 'reduced_1168_aligned_noempty.fasta-out_clean', 'reduced_252e_aligned_noempty.fasta-out_clean', 'reduced_630_aligned_noempty.fasta-out_clean', 'reduced_1171_aligned_noempty.fasta-out_clean', 'reduced_252p_aligned_noempty.fasta-out_clean', 'reduced_637_aligned_noempty.fasta-out_clean', 'reduced_1197_aligned_noempty.fasta-out_clean', 'reduced_673_aligned_noempty.fasta-out_clean', 'reduced_1201_aligned_noempty.fasta-out_clean', 'reduced_2550_aligned_noempty.fasta-out_clean', 'reduced_680_aligned_noempty.fasta-out_clean', 'reduced_120_aligned_noempty.fasta-out_clean', 'reduced_2561_aligned_noempty.fasta-out_clean', 'reduced_717_aligned_noempty.fasta-out_clean', 'reduced_122_aligned_noempty.fasta-out_clean', 'reduced_257_aligned_noempty.fasta-out_clean', 'reduced_727_aligned_noempty.fasta-out_clean', 'reduced_125_aligned_noempty.fasta-out_clean', 'reduced_267_aligned_noempty.fasta-out_clean', 'reduced_732_aligned_noempty.fasta-out_clean', 'reduced_12_aligned_noempty.fasta-out_clean', 'reduced_269_aligned_noempty.fasta-out_clean', 'reduced_736_aligned_noempty.fasta-out_clean', 'reduced_136_aligned_noempty.fasta-out_clean', 'reduced_277_aligned_noempty.fasta-out_clean', 'reduced_740_aligned_noempty.fasta-out_clean', 'reduced_139_aligned_noempty.fasta-out_clean', 'reduced_280_aligned_noempty.fasta-out_clean', 'reduced_743_aligned_noempty.fasta-out_clean', 'reduced_1484_aligned_noempty.fasta-out_clean', 'reduced_281_aligned_noempty.fasta-out_clean', 'reduced_148_aligned_noempty.fasta-out_clean', 'reduced_758_aligned_noempty.fasta-out_clean', 'reduced_1494_aligned_noempty.fasta-out_clean', 'reduced_785_aligned_noempty.fasta-out_clean', 'reduced_14_aligned_noempty.fasta-out_clean', 'reduced_293_aligned_noempty.fasta-out_clean', 'reduced_790_aligned_noempty.fasta-out_clean', 'reduced_150_aligned_noempty.fasta-out_clean', 'reduced_793_aligned_noempty.fasta-out_clean', 'reduced_1615_aligned_noempty.fasta-out_clean', 'reduced_305_aligned_noempty.fasta-out_clean', 'reduced_7_aligned_noempty.fasta-out_clean', 'reduced_168_aligned_noempty.fasta-out_clean', 'reduced_308_aligned_noempty.fasta-out_clean', 'reduced_807_aligned_noempty.fasta-out_clean', 'reduced_17_aligned_noempty.fasta-out_clean', 'reduced_310_aligned_noempty.fasta-out_clean', 'reduced_808_aligned_noempty.fasta-out_clean', 'reduced_1801_aligned_noempty.fasta-out_clean', 'reduced_822_aligned_noempty.fasta-out_clean', 'reduced_1815_aligned_noempty.fasta-out_clean', 'reduced_326_aligned_noempty.fasta-out_clean', 'reduced_825_aligned_noempty.fasta-out_clean', 'reduced_182_aligned_noempty.fasta-out_clean', 'reduced_32e_aligned.fasta-out_clean', 'reduced_82_aligned_noempty.fasta-out_clean', 'reduced_1842_aligned_noempty.fasta-out_clean', 'reduced_32s_aligned_noempty.fasta-out_clean', 'reduced_83_aligned_noempty.fasta-out_clean', 'reduced_1854_aligned_noempty.fasta-out_clean', 'reduced_332_aligned_noempty.fasta-out_clean', 'reduced_84_aligned_noempty.fasta-out_clean', 'reduced_1877_aligned_noempty.fasta-out_clean', 'reduced_357_aligned_noempty.fasta-out_clean', 'reduced_1901_aligned_noempty.fasta-out_clean', 'reduced_362_aligned_noempty.fasta-out_clean', 'reduced_872_aligned_noempty.fasta-out_clean', 'reduced_194_aligned_noempty.fasta-out_clean', 'reduced_363_aligned_noempty.fasta-out_clean', 'reduced_874_aligned_noempty.fasta-out_clean', 'reduced_197_aligned_noempty.fasta-out_clean', 'reduced_369_aligned_noempty.fasta-out_clean', 'reduced_883e_aligned_noempty.fasta-out_clean', 'reduced_1986_aligned_noempty.fasta-out_clean', 'reduced_378e_aligned_noempty.fasta-out_clean', 'reduced_883n_aligned_noempty.fasta-out_clean', 'reduced_201_aligned_noempty.fasta-out_clean', 'reduced_378s_aligned_noempty.fasta-out_clean', 'reduced_886_aligned_noempty.fasta-out_clean', 'reduced_38_aligned_noempty.fasta-out_clean', 'reduced_88_aligned_noempty.fasta-out_clean', 'reduced_204s_aligned_noempty.fasta-out_clean', 'reduced_391_aligned_noempty.fasta-out_clean', 'reduced_897_aligned_noempty.fasta-out_clean', 'reduced_2056_aligned_noempty.fasta-out_clean', 'reduced_392_aligned_noempty.fasta-out_clean', 'reduced_89_aligned_noempty.fasta-out_clean', 'reduced_207_aligned_noempty.fasta-out_clean', 'reduced_415_aligned_noempty.fasta-out_clean', 'reduced_938_aligned_noempty.fasta-out_clean', 'reduced_215_aligned_noempty.fasta-out_clean', 'reduced_417_aligned_noempty.fasta-out_clean', 'reduced_948_aligned_noempty.fasta-out_clean', 'reduced_2164_aligned_noempty.fasta-out_clean', 'reduced_421_aligned_noempty.fasta-out_clean', 'reduced_94_aligned_noempty.fasta-out_clean', 'reduced_218_aligned_noempty.fasta-out_clean', 'reduced_449_aligned_noempty.fasta-out_clean', 'reduced_950_aligned_noempty.fasta-out_clean', 'reduced_21_aligned_noempty.fasta-out_clean', 'reduced_464_aligned_noempty.fasta-out_clean', 'reduced_958_aligned_noempty.fasta-out_clean', 'reduced_484_aligned_noempty.fasta-out_clean', 'reduced_964_aligned_noempty.fasta-out_clean', 'reduced_225_aligned_noempty.fasta-out_clean', 'reduced_490_aligned_noempty.fasta-out_clean', 'reduced_977_aligned_noempty.fasta-out_clean', 'reduced_226_aligned_noempty.fasta-out_clean', 'reduced_497_aligned_noempty.fasta-out_clean', 'reduced_982_aligned_noempty.fasta-out_clean', 'reduced_2291_aligned_noempty.fasta-out_clean', 'reduced_4_aligned_noempty.fasta-out_clean', 'reduced_231_aligned_noempty.fasta-out_clean', 'reduced_508_aligned_noempty.fasta-out_clean', 'reduced_989_aligned_noempty.fasta-out_clean']
 
 
+
                                                     
 #Running IQTREE for trimmed and aligned files                                             
 for i in range(0, len(genes)):
@@ -335,59 +315,53 @@ for i in range(0, len(genes)):
 for i in range(0, len(genes)):
    gwf.target_from_template('amas_'+str(i), amas_c(genes = genes[i], path_in="/home/kris/dypsidinae/data/nex_files/"))
 
-
-#running MrBayes for 2.5 milion generationer
+"""
+#running MrBayes
 for i in range(0, len(genes)):
     gwf.target_from_template('MrBayes_test2'+str(i), MrBayes(genes = genes[i], path_in ="/home/kris/dypsidinae/data/nex_files/"))
 
-#running MrBayes for 3.5 milion generationer
+#running MrBayes
 #for i in range(0, len(genes_v2)):
  #   gwf.target_from_template('MrBayes_2.1_'+str(i), MrBayes_2(genes = genes_v2[i], path_in ="/home/kris/dypsidinae/data/nex_files/"))
 
-#running MrBayes for 5 milion generationer
+#running MrBayes
 for i in range(0, len(genes_v3)):
     gwf.target_from_template('MrBayes_3__'+str(i), MrBayes_3(genes = genes_v3[i], path_in ="/home/kris/dypsidinae/data/nex_files/"))
 
-#running MrBayes for 7.5 milion generationer
+#running MrBayes
 for i in range(0, len(genes_v4)):
     gwf.target_from_template('MrBayes_4__'+str(i), MrBayes_4(genes = genes_v4[i], path_in ="/home/kris/dypsidinae/data/nex_files/"))
+
+# make treefile
+for i in range(len(genes)):
+    gwf.target_from_template('rm_burnin_'+str(i),rm_burnin(genes = genes[i],
+                                                    path_in = "/home/kris/dypsidinae/data/nex_files/",
+						    output_1="_1_tree_file.nex",
+						    output_2= "_2_tree_file.nex"))
 
 #running conversion to newick
 for i in range(0, len(genes_converged)):
     gwf.target_from_template('treefile_'+str(i), treefile(genes = genes_converged[i],
                                                     path_in = "/home/kris/dypsidinae/data/nex_files/",
                                                     output= str(genes_converged[i])+"_genetree.tre"))
-    
-# making 1000 files containing one random gene tree from the posterior distribution of each gene
+
 for i in range(1000):
     gwf.target_from_template('random_tree_sets_'+str(i), random_tree_sets(path_in = "/home/kris/dypsidinae/data/nex_files/",
                                                     number=i,
-                                                    path_out="/home/kris/dypsidinae/Astral/",
+                                                    path_out="/home/kris/dypsidinae/3.Astral/",
                                                     output=str(i)+"random_trees.tre"))
-
-# Running ASTRAL on the 1000 files with gene trees
+# Running ASTRAL 
 for i in range(1000):
-    gwf.target_from_template('astral4'+str(i), astral4(path_in = "/home/kris/dypsidinae/Astral/", number=i, gene_tree_file=str(i)+"random_trees.tre", output=str(i)+"_astral_tree_probabilities.tre"))
-
-# Running ASTRAL4 on the 1000 trees made with ASTRAL
-gwf.target_from_template('astral', astral(path_in = "/home/kris/dypsidinae/Astral/",
-                                           output="consensus_astral_tree.tre"))
+    gwf.target_from_template('astral4'+str(i), astral4(path_in = "/home/kris/dypsidinae/3.Astral/", number=i, gene_tree_file=str(i)+"random_trees.tre", output=str(i)+"_astral_tree_probabilities.tre"))
 
 
-# Running wASTRAL
-gwf.target_from_template('wastral', wastral(path_in = "/home/kris/dypsidinae/Astral/",
-                                           output="wastral_tree.tre"))
-
-
-# Running ASTRAL
-gwf.target_from_template('astral_gene_supporting', astral_gene_supporting(path_in = "/home/kris/dypsidinae/Astral/",
-                                                    input="wastral_tree.tre",
-                                                    output="wastral_scored.tre"))
 #making file for MrBayes
-gwf.target_from_template('astral_2_MrBayes, astral_2_MrBayes(path_in = "/home/kris/dypsidinae/Astral/",
-                                                    input= *"_astral_tree_probabilities.tre",
-                                                    output="astral_for_mrbayes.run1.t"))
+for i in range(1000):
+    gwf.target_from_template('astral_2_MrBayes_'+str(i), astral_2_MrBayes(path_in = "/home/kris/dypsidinae/Astral/",input=str(i)+"_astral_tree_probabilities.tre", number=i,
+                                                    output=str(i)+"astral_for_mrbayes.run1.t"))
 
-#making consensus tree with MrBayes
-gwf.target_from_template('consensus_tree', consensus_tree(path_in= "/home/kris/dypsidinae/Astral/", input= "astral_for_mrbayes.run1.t",
-                                                    output="astral_for_mrbayes.run1.t.con.tre"))
+
+#making file for MrBayes
+gwf.target_from_template('astral_2_MrBayes', astral_2_MrBayes(path_in = "/home/kris/dypsidinae/3.Astral/",
+                                                    output="astral_for_mrbayes.tre"))
+"""
