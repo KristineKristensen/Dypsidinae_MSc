@@ -30,6 +30,8 @@ Workflow_phylopalm.py was used to run the analysis on the GenomeDK cluster. For 
 10. Make_one_treefile.py takes the consensus gene trees from MrBayes and collects them into one file and convert the file to Newick format so the file can be given to wASTRAL.
 11. genes_converged_IQtree.py makes one file with the gene trees from IQ-TREE that corresponds to genes that converged in MrBayes to make a file that can be given to wASTRAL.
 
+# Make_figures
+Cotains the scripts used to make figures.
 
 # Programs used:
 * Borowiec, M.L.,2016.AMAS: a fast tool for alignment manipulation and computing of summary statistics. PeerJ. 4:e1660. https://doi.org/10.7717/peerj.1660
