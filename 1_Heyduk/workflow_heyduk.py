@@ -171,7 +171,7 @@ def MrBayes_4(path_in, genes):
 
     spec = """
 
-    cd /home/kris/dypsidinae/scripts/
+    cd /home/kris/dypsidinae/sccripts/
 
     #activating the enviroment
     source /home/kris/miniconda3/etc/profile.d/conda.sh
@@ -286,6 +286,137 @@ def astral_2_MrBayes(path_in,output):
     return (inputs, outputs, options, spec)
 
 
+# ########################################################################################################################
+# ##############################################---- IQTREE ----##########################################################
+# ########################################################################################################################
+
+def iqtree(path_in, genes):
+    """Using IQTREE to find the best model"""
+    inputs = [path_in+genes+".fasta", path_in+genes+".part"]
+    outputs = ["/home/kris/dypsidinae/4.IQtree/"+genes+".part.treefile"]
+    options = {'cores': 2, 'memory': "40g", 'walltime': "12:00:00", 'account':"dypsidinae"}
+
+    spec = """
+     
+    cd /home/kris/dypsidinae/data/Dryad/B_main_analysis/A_alignments
+
+        
+    #Activate the enviroment
+    source /home/kris/miniconda3/etc/profile.d/conda.sh
+    conda activate iqtree
+        
+    iqtree2 -s {genes}.fasta -T AUTO -m TEST  -p {genes}.part -mset mrbayes  -B 1000
+   
+    mv *.part.ckp.gz /home/kris/dypsidinae/4.IQtree
+    mv *aligned_noempty.fasta-out_clean.part.best_model.nex /home/kris/dypsidinae/4.IQtree # slet linje
+    mv *.part.iqtree /home/kris/dypsidinae/4.IQtree
+    mv *.part.model.gz /home/kris/dypsidinae/4.IQtree
+    mv *.part.treefile /home/kris/dypsidinae/4.IQtree
+    mv *.fasta-out_clean.part.best_scheme /home/kris/dypsidinae/4.IQtree 
+    mv *.fasta-out_clean.part.best_scheme.nex /home/kris/dypsidinae/4.IQtree
+    mv *.fasta-out_clean.part.log /home/kris/dypsidinae/4.IQtree
+    mv *.fasta-out_clean.part.model.gz /home/kris/dypsidinae/4.IQtree
+    """.format(path_in = path_in, genes = genes)
+
+    return (inputs, outputs, options, spec) 
+
+# ########################################################################################################################
+# ###########################---- wAstral Tree Search on gene trees from IQtree ----#####################################
+# ########################################################################################################################
+
+def ML_wastral(path_in, gene_tree_file,output):
+    """Using wAstral to construct ML species trees from the gene tree files"""
+    inputs = [path_in + gene_tree_file]
+    outputs = [path_in + output]
+    options = {'cores': '16', 'memory': "100g", 'walltime': "48:00:00", 'account':"dypsidinae"}
+
+    spec = """
+    cd {path_in}
+    /home/kris/ASTER/bin/wastral -t 16 -o astral_ML.tre {gene_tree_file} 2> astral_ML_log_astral.out
+
+    """.format(path_in = path_in, gene_tree_file = gene_tree_file, output=output)
+    
+    return (inputs, outputs, options, spec)
+
+ # #######################################################################################################################
+# #####################################---- consensus genetrees ----#####################################################
+# #######################################################################################################################
+#Finding the consensus gene trees
+def MrB_sumt(path_in, genes, path_out):
+    """Using MrBayes to find gene trees"""
+    inputs = [path_in+genes]
+    outputs = [path_out+genes]
+    options = {'cores':"2", 'memory': "120g", 'walltime': "166:00:00", 'account':"dypsidinae"}
+
+    spec = """
+
+    cd /home/kris/dypsidinae/scripts/
+
+
+    #activate the enviroment
+    source /home/kris/miniconda3/etc/profile.d/conda.sh
+    conda activate python3_env
+    python3 mb_writing_sumt.py {genes}
+
+    cd /home/kris/dypsidinae/programs/MrBayes-3.2.7a/bin/
+
+    #Activate MrBayes
+    ./mb  {path_out}{genes}_mb_sumt.nex
+    
+    mv {genes}.con.tre {path_out}
+
+    """.format(path_in = path_in, genes= genes, path_out= path_out)
+
+    return (inputs, outputs, options, spec)
+
+
+# ########################################################################################################################
+# ###########################---- making one gene tree file from MrBayes ----#############################################
+# ########################################################################################################################
+#Making one file in newick format with one gene trees per gene from MrBayes
+def MrBayes_one_file(path_in, output):
+    """Using wAstral to construct species trees from the gene tree files from MrBayes"""
+    inputs = [path_in]
+    outputs = [path_in + output]
+    options = {'cores': '16', 'memory': "100g", 'walltime': "48:00:00", 'account':"dypsidinae"}
+
+    spec = """
+   
+   cd /home/kris/dypsidinae/scripts/
+
+    #activate the enviroment
+    source /home/kris/miniconda3/etc/profile.d/conda.sh
+    conda activate base
+
+    python Make_one_treefile.py 
+
+    """.format(path_in = path_in, output=output)
+    
+    return (inputs, outputs, options, spec)
+
+
+# ########################################################################################################################
+# ###########################---- wAstral Tree Search on gene trees from MrBayes ----#####################################
+# ########################################################################################################################
+
+#Making a species tree from the gene trees
+def MrBayes_wastral(path_in, gene_tree_file, output):
+    """Using wAstral to construct species trees from the gene tree files from MrBayes"""
+    inputs = [path_in + gene_tree_file]
+    outputs = [path_in + output]
+    options = {'cores': '16', 'memory': "100g", 'walltime': "48:00:00", 'account':"dypsidinae"}
+
+    spec = """
+   
+
+    cd {path_in}
+    /home/kris/ASTER/bin/wastral -t 16 -o heyduk_astral_Bayes.tre {gene_tree_file} 2> heyduk_astral_Bayes_log.out
+
+    """.format(path_in = path_in, gene_tree_file = gene_tree_file, output=output)
+    
+    return (inputs, outputs, options, spec)
+
+
 ########################################################################################################################
 ######################################################---- RUN ----#####################################################
 ########################################################################################################################
@@ -365,3 +496,20 @@ for i in range(1000):
 gwf.target_from_template('astral_2_MrBayes', astral_2_MrBayes(path_in = "/home/kris/dypsidinae/3.Astral/",
                                                     output="astral_for_mrbayes.tre"))
 """
+#Running IQTREE for trimmed and aligned files to find ML genetrees
+for i in range(0, len(genes)):
+   gwf.target_from_template('ML_tree_'+str(i), ML_tree(genes = genes[i],
+                                                    path_in = "/home/kris/dypsidinae/data/Dryad/B_main_analysis/A_alignments/",
+                                                    path_out="/home/kris/dypsidinae/4.IQtree/")) 
+
+#Running wASTRAL
+gwf.target_from_template('ML_wastral_'+str(i), ML_wastral(path_in = "/home/kris/dypsidinae/4.IQtree/", gene_tree_file="ML_gene_trees.nex", output= "astral_ML.tre"))
+
+
+
+
+#Make one file with a gene tree for each gene
+gwf.target_from_template('MrBayes_one_file', MrBayes_one_file(path_in = "/home/kris/dypsidinae/2.MrBayes/", output="MB_gene_trees.tre"))
+
+#Running wASTRAL
+#gwf.target_from_template('MB_wastral_'+str(i), MrBayes_wastral(path_in = "/home/kris/dypsidinae/B_phylopalm/3.MrBayes/", gene_tree_file="MB_gene_trees.tre", output= "astral_Bayes.tre"))
