@@ -416,6 +416,51 @@ def MrBayes_wastral(path_in, gene_tree_file, output):
     
     return (inputs, outputs, options, spec)
 
+# ########################################################################################################################
+# ###########################----gene trees from converged genes for IQtree ----##########################################
+# ########################################################################################################################
+#Making one file  with all the gene trees from IQtree with the genes that converged using MrBayes
+def IQtree_converged_genes(path_in, output):
+    """selecting gene trees that converged in MrBayes"""
+    inputs = [path_in]
+    outputs = [path_in + output]
+    options = {'cores': '4', 'memory': "100g", 'walltime': "48:00:00", 'account':"dypsidinae"}
+
+    spec = """
+
+   cd /home/kris/dypsidinae/scripts/
+
+    #activate the enviroment
+    source /home/kris/miniconda3/etc/profile.d/conda.sh
+    conda activate base
+
+    python genes_converged_IQtree.py
+
+    """.format(path_in = path_in, output=output)
+
+    return (inputs, outputs, options, spec)
+
+
+
+
+# ########################################################################################################################
+# ###########################---- wAstral Tree Search on gene trees from IQtree that converged ----#######################
+# ########################################################################################################################
+
+def ML_converged_wastral(path_in, gene_tree_file,output):
+    """Using wAstral to construct ML species trees from the gene tree files"""
+    inputs = [path_in + gene_tree_file]
+    outputs = [path_in + output]
+    options = {'cores': '16', 'memory': "100g", 'walltime': "48:00:00", 'account':"dypsidinae"}
+
+    spec = """
+    cd {path_in}
+    /home/kris/ASTER/bin/wastral -t 16 -o astral_ML_converged.tre {gene_tree_file} 2> astral_ML_converged_log.out
+
+    """.format(path_in = path_in, gene_tree_file = gene_tree_file, output=output)
+
+    return (inputs, outputs, options, spec)
+
 
 ########################################################################################################################
 ######################################################---- RUN ----#####################################################
@@ -513,3 +558,10 @@ gwf.target_from_template('MrBayes_one_file', MrBayes_one_file(path_in = "/home/k
 
 #Running wASTRAL
 #gwf.target_from_template('MB_wastral_'+str(i), MrBayes_wastral(path_in = "/home/kris/dypsidinae/B_phylopalm/3.MrBayes/", gene_tree_file="MB_gene_trees.tre", output= "astral_Bayes.tre"))
+
+
+#Take genes that converged in MrBayes
+gwf.target_from_template('IQtree_converged_genes', IQtree_converged_genes(path_in = "/home/kris/dypsidinae/4.IQtree/", output="only_converged_gene_trees.nex"))
+
+#running wASTRAL
+gwf.target_from_template('ML_converged_wastral', ML_converged_wastral(path_in = "/home/kris/dypsidinae/4.IQtree/", gene_tree_file="only_converged_gene_trees.nex", output= "astral_ML_converged.tre"))
