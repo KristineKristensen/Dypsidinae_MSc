@@ -269,6 +269,62 @@ def taper(path_in, genes, path_out):
 
     return (inputs, outputs, options, spec)
 
+# ########################################################################################################################
+# #######################################---- MrBayes_3.5_generation-----#################################################
+# ########################################################################################################################
+
+def MrBayes_2(path_in, genes, path_out):
+    """Using MrBayes to find gene trees"""
+    inputs = [path_in+genes+"_no_X-out.nex"]
+    outputs = [path_out+genes+"_2.log"]
+    options = {'cores':"2", 'memory': "120g", 'walltime': "166:00:00", 'account':"dypsidinae"}
+
+    spec = """
+
+    cd /home/kris/dypsidinae/scripts/
+
+
+    #activate the enviroment
+    source /home/kris/miniconda3/etc/profile.d/conda.sh
+    conda activate python3_env
+    python3 IQtree_2_MrBayes_2.py {genes}
+
+    cd /home/kris/dypsidinae/programs/MrBayes-3.2.7a/bin/
+
+    #Activate MrBayes
+    ./mb  {path_out}{genes}_MrBayes_block_2.nex
+
+
+    mv {genes}_2.log {path_out}
+
+    """.format(path_in = path_in, genes= genes, path_out= path_out)
+
+    return (inputs, outputs, options, spec)
+
+
+
+# ########################################################################################################################
+# ##############################################---- Cheking_MrBayes_2 ----#########################################################
+# ########################################################################################################################
+
+def check_MrBayes_2(path_in, output):
+    """Using MrBayes to find gene trees"""
+    inputs = [path_in]
+    outputs = [output]
+    options = {'cores':"2", 'memory': "120g", 'walltime': "3:00:00", 'account':"dypsidinae"}
+
+    spec = """
+
+    cd /home/kris/dypsidinae/scripts/
+
+    #activate the enviroment
+    source /home/kris/miniconda3/etc/profile.d/conda.sh
+    conda activate python3_env
+    python3 reading_MB_logfiles_2.py
+
+    """.format(path_in = path_in, output= output)
+
+    return (inputs, outputs, options, spec)
 
 
 
@@ -335,3 +391,12 @@ for i in range(0, len(genes)):
     gwf.target_from_template('Taper_'+str(i), taper(genes = genes[i],
                                                     path_in = "/home/kris/dypsidinae/C_large_dataset/4.cialign/",
                                                     path_out = "/home/kris/dypsidinae/C_large_dataset/5.taper/"))
+
+
+#running MrBayes for 3.5 milion generations
+for i in range(0, len(genes_v2)):
+    gwf.target_from_template('MrBayes_2_'+str(i), MrBayes_2(genes = genes_v2[i], path_in ="/home/kris/dypsidinae/C_large_dataset/7.Nex_files/",
+							     path_out="/home/kris/dypsidinae/C_large_dataset/8.MrBayes/"))
+
+#check for convergence                                 
+#gwf.target_from_template('check_2', check_MrBayes_2(path_in = "/home/kris/dypsidinae/C_large_dataset/8.MrBayes/",output="/home/kris/dypsidinae/C_large_dataset/8.MrBayes/mb_records_2.csv"))
