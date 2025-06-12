@@ -497,3 +497,100 @@ for i in range(0, len(genes_converged)):
 # Running ASTRAL on the 1000 files with gene trees
 for i in range(1000):
     gwf.target_from_template('astral4'+str(i), astral4(path_in = "/home/kris/dypsidinae/C_large_dataset/9.Astral/", number=i, gene_tree_file=str(i)+"random_trees.tre", output=str(i)+"_astral_tree.tre"))
+
+
+# Running ASTRAL
+gwf.target_from_template('astral_scoring', astral_scoring(path_in = "/home/kris/dypsidinae/C_large_dataset/8.MrBayes_n/",
+                                                    input="astral_Bayes.tre",
+                                                    output="scored_wastral_Bayes.tre"))
+
+# Running ASTRAL
+gwf.target_from_template('astral_scoring_ML_freerate', astral_scoring_ML_freerate(path_in = "/home/kris/dypsidinae/C_large_dataset/10.IQtree/",
+                                                    input="astral_ML.tre",
+                                                    output="scored_wastral_ML_freerate.tre"))
+
+# Running ASTRAL
+gwf.target_from_template('astral_scoring', astral_scoring_ML(path_in = "/home/kris/dypsidinae/C_large_dataset/10.IQtree_mrb_model/",
+                                                    input="astral_ML_MrB.tre",
+                                                    output="scored_wastral_ML.tre"))
+
+# Running ASTRAL
+gwf.target_from_template('astral_scoring_converged', astral_scoring_converged(path_in = "/home/kris/dypsidinae/C_large_dataset/10.IQtree_mrb_model/",
+                                                    input="astral_ML_converged.tre",
+                                                    output="scored_wastral_converged.tre"))
+
+
+# #######################################################################################################################
+# #####################################---- Scoring ML converged Astral Tree  ----#############################################
+# #########################################################################################################################
+
+#Scoring existing tree with ASTRAL
+def astral_scoring_converged(path_in,input, output):
+    """Using Astral to score existing tree"""
+    inputs = [path_in+input]
+    outputs = [path_in + output]
+    options = {'cores': '16', 'memory': "40g", 'walltime': "24:00:00", 'account':"dypsidinae"}
+
+    spec = """
+
+    cd /home/kris/Astral/
+
+    java -D"java.library.path=lib/" -jar astral.5.7.8.jar -q {path_in}{input} -t 2 -o {path_in}scored_wastral_converged.tre -i {path_in}only_converged_gene_trees.nex 2>scored_converged_astral_log.out
+
+    mv scored_wastral_converged.tre /home/kris/dypsidinae/C_large_dataset/10.IQtree_mrb_model/
+    mv scored_converged_astral_log.out /home/kris/dypsidinae/C_large_dataset/10.IQtree_mrb_model/
+
+    """.format(path_in = path_in, input=input, output=output)
+
+    return (inputs, outputs, options, spec)
+
+
+# #######################################################################################################################
+# #####################################---- Scoring ML Astral Tree  ----#############################################
+# #########################################################################################################################
+
+#Scoring existing tree with ASTRAL
+def astral_scoring_ML(path_in,input, output):
+    """Using Astral to score existing tree"""
+    inputs = [path_in+input]
+    outputs = [path_in + output]
+    options = {'cores': '16', 'memory': "40g", 'walltime': "24:00:00", 'account':"dypsidinae"}
+
+    spec = """
+
+    cd /home/kris/Astral/
+
+    java -D"java.library.path=lib/" -jar astral.5.7.8.jar -q {path_in}{input} -t 2 -o {path_in}scored_wastral_ML.tre -i {path_in}gene_trees.nex 2>scored_ML_astral_log.out
+
+    mv scored_wastral_ML.tre /home/kris/dypsidinae/C_large_dataset/10.IQtree_mrb_model/
+    mv scored_ML_astral_log.out /home/kris/dypsidinae/C_large_dataset/10.IQtree_mrb_model/
+
+    """.format(path_in = path_in, input=input, output=output)
+
+    return (inputs, outputs, options, spec)
+
+
+# #######################################################################################################################
+# #####################################---- Scoring ML Astral Tree  ----#############################################
+# #########################################################################################################################
+
+#Scoring existing tree with ASTRAL
+def astral_scoring_ML_freerate(path_in,input, output):
+    """Using Astral to score existing tree"""
+    inputs = [path_in+input]
+    outputs = [path_in + output]
+    options = {'cores': '16', 'memory': "40g", 'walltime': "24:00:00", 'account':"dypsidinae"}
+
+    spec = """
+
+    cd /home/kris/Astral/
+
+    java -D"java.library.path=lib/" -jar astral.5.7.8.jar -q {path_in}{input} -t 2 -o {path_in}scored_wastral_ML_freerate.tre -i {path_in}gene_trees.nex 2>scored_ML_freerate_log.out
+
+    mv scored_wastral_ML_freerate.tre /home/kris/dypsidinae/C_large_dataset/10.IQtree/
+    mv scored_ML_freerate_log.out /home/kris/dypsidinae/C_large_dataset/10.IQtree/
+
+    """.format(path_in = path_in, input=input, output=output)
+
+    return (inputs, outputs, options, spec)
+gene_trees.nex", output= "astral_ML.tre

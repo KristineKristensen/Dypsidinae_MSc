@@ -565,3 +565,101 @@ gwf.target_from_template('IQtree_converged_genes', IQtree_converged_genes(path_i
 
 #running wASTRAL
 gwf.target_from_template('ML_converged_wastral', ML_converged_wastral(path_in = "/home/kris/dypsidinae/4.IQtree/", gene_tree_file="only_converged_gene_trees.nex", output= "astral_ML_converged.tre"))
+
+
+# #########################################################################################################################
+# #####################################---- Scoring ML converged Astral Tree  ----#########################################
+# #########################################################################################################################
+
+#Scoring existing tree with ASTRAL
+def astral_scoring_ML_converged(path_in,input, output):
+    """Using Astral to score existing tree"""
+    inputs = [path_in+input]
+    outputs = [path_in + output]
+    options = {'cores': '16', 'memory': "40g", 'walltime': "24:00:00", 'account':"dypsidinae"}
+
+    spec = """
+
+    cd /home/kris/Astral/
+
+    java -D"java.library.path=lib/" -jar astral.5.7.8.jar -q {path_in}{input} -t 2 -o {path_in}scored_wastral_ML_converged.tre -i {path_in}only_converged_gene_trees.nex 2>scored_ML_converged_log.out
+
+    mv scored_wastral_ML_converged.tre /home/kris/dypsidinae/4.IQtree/
+    mv scored_ML_converged_log.out /home/kris/dypsidinae/4.IQtree/
+
+
+    """.format(path_in = path_in, input=input, output=output)
+
+    return (inputs, outputs, options, spec)
+
+# Running ASTRAL
+gwf.target_from_template('astral_scoring_ML_converged', astral_scoring_ML_converged(path_in = "/home/kris/dypsidinae/4.IQtree/",
+                                                    input="astral_ML_converged.tre",
+                                                    output="scored_wastral_ML_converged.tre"))
+
+
+# #########################################################################################################################
+# #####################################---- Scoring ML Astral Tree  ----###################################################
+# #########################################################################################################################
+
+#Scoring existing tree with ASTRAL
+def astral_scoring_ML(path_in,input, output):
+    """Using Astral to score existing tree"""
+    inputs = [path_in+input]
+    outputs = [path_in + output]
+    options = {'cores': '16', 'memory': "40g", 'walltime': "24:00:00", 'account':"dypsidinae"}
+
+    spec = """
+
+    cd /home/kris/Astral/
+
+    java -D"java.library.path=lib/" -jar astral.5.7.8.jar -q {path_in}{input} -t 2 -o {path_in}scored_wastral_ML.tre -i {path_in}gene_trees.nex 2>scored_ML_log.out
+
+    mv scored_wastral_ML.tre /home/kris/dypsidinae/4.IQtree/
+    mv scored_ML_log.out /home/kris/dypsidinae/4.IQtree/
+
+
+    """.format(path_in = path_in, input=input, output=output)
+
+    return (inputs, outputs, options, spec)
+
+
+# Running ASTRAL
+gwf.target_from_template('astral_scoring_ML', astral_scoring_ML(path_in = "/home/kris/dypsidinae/4.IQtree/",
+                                                    input="astral_ML.tre",
+                                                    output="scored_wastral_ML.tre"))
+
+
+# #########################################################################################################################
+# #####################################---- Scoring ML freerate Astral Tree  ----##########################################
+# #########################################################################################################################
+
+#Scoring existing tree with ASTRAL
+def astral_scoring_ML_freerate(path_in,input, output):
+    """Using Astral to score existing tree"""
+    inputs = [path_in+input]
+    outputs = [path_in + output]
+    options = {'cores': '16', 'memory': "40g", 'walltime': "24:00:00", 'account':"dypsidinae"}
+
+    spec = """
+
+    cd /home/kris/Astral/
+
+    java -D"java.library.path=lib/" -jar astral.5.7.8.jar -q {path_in}{input} -t 2 -o {path_in}scored_wastral_ML_freerate.tre -i {path_in}gene_trees_freerate.nex. 2>scored_ML_freerate_log.out
+
+    mv scored_wastral_ML_freerate.tre /home/kris/dypsidinae/4.IQtree_freerate/
+    mv scored_ML_freerate_log.out /home/kris/dypsidinae/4.IQtree_freerate/
+
+
+    """.format(path_in = path_in, input=input, output=output)
+
+    return (inputs, outputs, options, spec)
+
+
+# Running ASTRAL
+gwf.target_from_template('astral_scoring_ML_freerate', astral_scoring_ML_freerate(path_in = "/home/kris/dypsidinae/4.IQtree_freerate/",
+                                                    input="astral_ML_freerate.tre",
+                                                    output="scored_wastral_ML_freerate.tre"))
+
+astral_ML_freerate.tre                                 
+gene_trees_ML_freerate.nex 
