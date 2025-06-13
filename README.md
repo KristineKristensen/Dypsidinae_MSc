@@ -8,7 +8,8 @@ Most of the computing for this project was performed on the GenomeDK cluster. I 
 # 1_Original
 Workflow_with_heyduk.py was used to run the analysis on the GenomeDK cluster. For this i used the following scripts:
 
-1. MrBayes.py is a script used to make a MrBayes block using the results from ModelFinder 
+1. MrBayes.py 
+    is a script used to make a MrBayes block using the results from ModelFinder 
 2. MrBayes_2.py is like MrBayes.py but used when genes needed to run longer e.g. a difference is append=yes, so MrBayes continues from the previous analysis.
 3. nexus_to_newick.py is used for converting the trees from NEXUS to Newick format and gather 1000 gene trees from the two MrBayes runs into one file.
 4. random_tree_sets.py takes the one random gene tree from the posterior distribution of each gene to make a file with one random tree from each gene that can be used by ASTRAL-IV.
